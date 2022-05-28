@@ -53,8 +53,11 @@ def put_file(skt, address, lock):
     skt.sendto(b'start_upload', address)
     with open(filename, 'wb') as file:
         while True:
+            sq = -1
             data, address = skt.recvfrom(4096)
-            sq, data = data.split(":")
+            if b"::" in data:
+                sq = data.split(b"::")[0]
+                data = b"::".join(data.split(b"::")[1:])
             if data == b'eof':
                 break
             if data == b'error':
@@ -62,7 +65,7 @@ def put_file(skt, address, lock):
             file.write(data)
             with lock:
                 skt.sendto(str(seqn).encode(), address)
-            if sq == seqn:
+            if int(sq) == seqn:
                 seqn += 1
             else:
                 data = b'error'
@@ -112,6 +115,7 @@ def handle_host(address, data, clnum, lock):
             print(data.decode())
     except Exception as er:
         print(er)
+
     finally:
         with lock:
             print(f"Closing socket: {skt.getsockname()}")
