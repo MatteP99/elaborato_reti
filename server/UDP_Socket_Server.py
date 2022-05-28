@@ -126,7 +126,7 @@ options = b"""
     put -> Upload a file
 """
 
-ip = "192.168.178.24"
+ip = '192.168.178.26'
 sock = sk.socket(sk.AF_INET, sk.SOCK_DGRAM)
 server_address = (ip, 10000)
 print('\n\r starting up on %s port %s' % server_address)
