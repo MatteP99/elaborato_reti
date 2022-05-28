@@ -34,6 +34,7 @@ def get_file(skt, address, lock):
                         with lock:
                             skt.sendto(b'error', address)
                         break
+        skt.settimeout(60)
         if seq != -1:
             with lock:
                 skt.sendto(b'eof', address)
@@ -46,7 +47,6 @@ def get_file(skt, address, lock):
             strr = b'\nDownload of ' + filename.encode() + b' deleted!\n' + options
             with lock:
                 skt.sendto(strr, address)
-        skt.settimeout(60)
     else:
         strrr = b'Error: file not found!\n' + options
         with lock:
@@ -67,9 +67,7 @@ def put_file(skt, address, lock):
             if b"::" in data:
                 sq = data.split(b"::")[0]
                 data = b"::".join(data.split(b"::")[1:])
-            if data == b'eof':
-                break
-            if data == b'error':
+            if data == b'eof' or data == b'error':
                 break
             file.write(data)
             with lock:
@@ -78,8 +76,7 @@ def put_file(skt, address, lock):
                 seqn += 1
             else:
                 data = b'error'
-                break;
-        file.close()
+                break
     if data == b'error':
         os.remove(filename)
         strr = b'\nUpload of ' + filename.encode() + b' deleted!\n' + options
@@ -118,7 +115,7 @@ def handle_host(address, data, clnum, lock):
                 with lock:
                     skt.sendto(strrr, address)
 
-            print('\n\r waiting to receive message...')
+            print('\n\rwaiting to receive message...')
             data, address = skt.recvfrom(1024)
             with lock:
                 print(f'received {len(data)} bytes from {address}\nSocket: {skt.getsockname()}')
@@ -143,7 +140,7 @@ options = b"""
 ip = '192.168.178.26'
 sock = sk.socket(sk.AF_INET, sk.SOCK_DGRAM)
 server_address = (ip, 10000)
-print('\n\r starting up on %s port %s' % server_address)
+print('\n\rstarting up on %s port %s' % server_address)
 sock.bind(server_address)
 lck = td.Lock()
 clients = 0
@@ -151,7 +148,7 @@ try:
     while True:
         dt, addr = sock.recvfrom(1024)
         clients += 1
-        print(f'host: {addr} connected\nSocket: {sock.getsockname()}')
+        print(f'\nhost: {addr} connected\nSocket: {sock.getsockname()}')
         thread = td.Thread(target=handle_host, args=[addr, dt, clients, lck], name=f"Host: {clients}")
         thread.start()
 except Exception as err:
