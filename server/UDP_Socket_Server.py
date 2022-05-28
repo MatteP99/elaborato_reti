@@ -54,6 +54,7 @@ def put_file(skt, address, lock):
     with open(filename, 'wb') as file:
         while True:
             data, address = skt.recvfrom(4096)
+            sq, data = data.split(":")
             if data == b'eof':
                 break
             if data == b'error':
@@ -61,7 +62,11 @@ def put_file(skt, address, lock):
             file.write(data)
             with lock:
                 skt.sendto(str(seqn).encode(), address)
-            seqn += 1
+            if sq == seqn:
+                seqn += 1
+            else:
+                data = b'error'
+                break;
         file.close()
     if data == b'error':
         strr = b'\nUpload of ' + filename.encode() + b' deleted!\n' + options
@@ -76,7 +81,7 @@ def put_file(skt, address, lock):
 def handle_host(address, data, clnum, lock):
     with lock:
         skt = sk.socket(sk.AF_INET, sk.SOCK_DGRAM)
-        skt.bind(('localhost', 10000 + clnum))
+        skt.bind((ip, 10000 + clnum))
         skt.settimeout(60)
     try:
         while True:
@@ -121,8 +126,9 @@ options = b"""
     put -> Upload a file
 """
 
+ip = "192.168.178.24"
 sock = sk.socket(sk.AF_INET, sk.SOCK_DGRAM)
-server_address = ('localhost', 10000)
+server_address = (ip, 10000)
 print('\n\r starting up on %s port %s' % server_address)
 sock.bind(server_address)
 lck = td.Lock()

@@ -4,8 +4,8 @@ import time
 
 # Create il socket UDP
 sock = sk.socket(sk.AF_INET, sk.SOCK_DGRAM)
-
-server_address = ('localhost', 10000)
+sock.settimeout(15)
+server_address = ('192.168.178.26', 10000)
 
 try:
     sock.sendto(b'start', server_address)
@@ -23,7 +23,7 @@ try:
         data, server = sock.recvfrom(4096)
         response = data.decode()
         print(response)
-        if "found" in response and msg in response:
+        if f"{msg} of" in response and "bytes found!" in response:
             fname = response.split(" ")[0]
             flen = int(response.split(" ")[2])
             recv = 0
@@ -50,7 +50,7 @@ try:
                 data, server = sock.recvfrom(1024)
                 print(data.decode())
         if "What is the file name?" in response:
-            fname = input("File name: ")
+            fname = input("Client> ")
             flen = os.path.getsize('./' + fname)
             sock.sendto(fname.encode(), server)
             sent = 0
@@ -61,8 +61,13 @@ try:
                     while byte := file.read(256):
                         sent += len(byte)
                         print(f"Upload: {round(sent / flen * 100, 2)}%")
-                        sock.sendto(byte, server)
-                        data, server = sock.recvfrom(1024)
+                        sock.sendto(f"{seq}:".encode() + byte, server)
+                        while True:
+                            try:
+                                data, server = sock.recvfrom(1024)
+                                break
+                            except sk.timeout:
+                                sock.sendto(f"{seq}:".encode() + byte, server)
                         if int(data.decode()) == seq:
                             seq += 1
                         else:

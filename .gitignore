@@ -156,3 +156,4 @@ cython_debug/
 *.pdf
 *.zip
 *.png
+*.ahk
