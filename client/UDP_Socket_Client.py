@@ -61,13 +61,14 @@ try:
                     while byte := file.read(256):
                         sent += len(byte)
                         print(f"Upload: {round(sent / flen * 100, 2)}%")
-                        sock.sendto(f"{seq}:".encode() + byte, server)
+                        sock.sendto(f"{seq}::".encode() + byte, server)
                         while True:
                             try:
                                 data, server = sock.recvfrom(1024)
                                 break
                             except sk.timeout:
-                                sock.sendto(f"{seq}:".encode() + byte, server)
+                                sock.sendto(f"{seq}::".encode() + byte, server)
+                                print("\nRESENDING DATA!\n")
                         if int(data.decode()) == seq:
                             seq += 1
                         else:
