@@ -13,22 +13,30 @@ def get_file(skt, address, lock):
         with lock:
             skt.sendto(f"{filename} of {os.path.getsize('./' + filename)} bytes found!".encode(), address)
         data, address = skt.recvfrom(1024)
+        skt.settimeout(5)
         if data == b"start_download":
             seq = 0
             with open(filename, 'rb') as file:
                 while byte := file.read(256):
                     with lock:
-                        skt.sendto(byte, address)
-                    data, address = skt.recvfrom(1024)
+                        skt.sendto(f"{seq}::".encode() + byte, address)
+                    while True:
+                        try:
+                            data, address = skt.recvfrom(1024)
+                            break
+                        except sk.timeout:
+                            with lock:
+                                skt.sendto(f"{seq}::".encode() + byte, address)
                     if int(data.decode()) == seq:
                         seq += 1
                     else:
+                        seq = -1
                         with lock:
                             skt.sendto(b'error', address)
                         break
-                file.close()
-                with lock:
-                    skt.sendto(b'eof', address)
+        if seq != -1:
+            with lock:
+                skt.sendto(b'eof', address)
         data, address = skt.recvfrom(1024)
         if data == b'successful_download':
             strr = b'\nDownload of ' + filename.encode() + b' completed!\n' + options
@@ -38,6 +46,7 @@ def get_file(skt, address, lock):
             strr = b'\nDownload of ' + filename.encode() + b' deleted!\n' + options
             with lock:
                 skt.sendto(strr, address)
+        skt.settimeout(60)
     else:
         strrr = b'Error: file not found!\n' + options
         with lock:
@@ -72,6 +81,7 @@ def put_file(skt, address, lock):
                 break;
         file.close()
     if data == b'error':
+        os.remove(filename)
         strr = b'\nUpload of ' + filename.encode() + b' deleted!\n' + options
         with lock:
             skt.sendto(strr, address)

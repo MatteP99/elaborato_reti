@@ -32,6 +32,9 @@ try:
             with open(fname, 'wb') as file:
                 while True:
                     data, server = sock.recvfrom(1024)
+                    if b"::" in data:
+                        sq = data.split(b"::")[0]
+                        data = b"::".join(data.split(b"::")[1:])
                     recv = recv+len(data)
                     print(f"Download: {round(recv/flen*100, 2)}%")
                     if data == b'eof':
@@ -40,8 +43,11 @@ try:
                         break
                     file.write(data)
                     sock.sendto(str(seq).encode(), server)
-                    seq += 1
-                file.close()
+                    if int(sq) == seq:
+                        seq += 1
+                    else:
+                        data = b'error'
+                        break
                 if data == b'error':
                     os.remove(fname)
                     sock.sendto(b'download_error', server)
