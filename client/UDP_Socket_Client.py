@@ -37,9 +37,7 @@ try:
                         data = b"::".join(data.split(b"::")[1:])
                     recv = recv+len(data)
                     print(f"Download: {round(recv/flen*100, 2)}%")
-                    if data == b'eof':
-                        break
-                    elif data == b'error':
+                    if data == b'eof' or data == b'error':
                         break
                     file.write(data)
                     sock.sendto(str(seq).encode(), server)
@@ -48,13 +46,13 @@ try:
                     else:
                         data = b'error'
                         break
-                if data == b'error':
-                    os.remove(fname)
-                    sock.sendto(b'download_error', server)
-                else:
-                    sock.sendto(b'successful_download', server)
-                data, server = sock.recvfrom(1024)
-                print(data.decode())
+            if data == b'error':
+                os.remove(fname)
+                sock.sendto(b'download_error', server)
+            else:
+                sock.sendto(b'successful_download', server)
+            data, server = sock.recvfrom(1024)
+            print(data.decode())
         if "What is the file name?" in response:
             fname = input("Client> ")
             flen = os.path.getsize('./' + fname)
