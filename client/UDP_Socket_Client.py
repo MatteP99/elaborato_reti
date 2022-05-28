@@ -57,6 +57,7 @@ try:
             seq = 0
             data, server = sock.recvfrom(1024)
             if data == b"start_upload":
+                sock.settimeout(5)
                 with open(fname, 'rb') as file:
                     while byte := file.read(256):
                         sent += len(byte)
@@ -72,12 +73,14 @@ try:
                         if int(data.decode()) == seq:
                             seq += 1
                         else:
+                            seq = -1
                             sock.sendto(b'error', server)
                             break
-                    file.close()
+                if seq != -1:
                     sock.sendto(b'eof', server)
                 data, server = sock.recvfrom(1024)
                 print(data.decode())
+                sock.settimeout(15)
 except Exception as info:
     print(info)
 finally:
