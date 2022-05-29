@@ -1,6 +1,5 @@
 import socket as sk
 import os
-import time
 import threading as td
 
 
@@ -25,6 +24,7 @@ def get_file(skt, address, lock):
                             data, address = skt.recvfrom(1024)
                             break
                         except sk.timeout:
+                            print(f"\nSocket: {sock.getsockname()}\nPacket lost. resending data!\n")
                             with lock:
                                 skt.sendto(f"{seq}::".encode() + byte, address)
                     if int(data.decode()) == seq:
