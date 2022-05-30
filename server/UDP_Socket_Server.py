@@ -140,6 +140,8 @@ def handle_host(address, data, clnum, lock):
             with lock:
                 print(f'received {len(data)} bytes from {address}\nSocket: {skt.getsockname()}')
             print(data.decode())
+    except sk.timeout:
+        print("Timed out!")
     except Exception as info:
         print(f"\nError: {info}\n")
         traceback.print_exc()
