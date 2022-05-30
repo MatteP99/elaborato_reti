@@ -77,13 +77,14 @@ def put_file(skt, address, lock):
         skt.sendto(b'What is the file name?', address)
     data, address = skt.recvfrom(1024)
     filename = data.decode()
+    seqn = 0
     old_seq = 0
     skt.sendto(b'start_upload', address)
     with open(filename, 'wb') as file:
         while True:
             data, address = skt.recvfrom(1024)
             if b"::" in data:
-                if old_seq > 0:
+                if seqn > 0:
                     old_seq = seqn
                 seqn = int(data.split(b"::")[0])
                 data = b"::".join(data.split(b"::")[1:])
@@ -141,10 +142,9 @@ def handle_host(address, data, clnum, lock):
             print(data.decode())
     except Exception as er:
         print(er)
-
     finally:
         with lock:
-            print(f"Closing socket: {skt.getsockname()}")
+            print(f"\nClosing socket: {skt.getsockname()}")
             skt.close()
 
 
@@ -172,6 +172,8 @@ try:
         thread.start()
 except Exception as err:
     print(err)
+except KeyboardInterrupt:
+    print("\nClosing program...")
 finally:
-    print(f"Closing socket: {sock.getsockname()}")
+    print(f"\nClosing socket: {sock.getsockname()}")
     sock.close()
