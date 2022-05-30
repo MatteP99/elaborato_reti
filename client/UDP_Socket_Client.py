@@ -51,7 +51,7 @@ def put_file(addr):
                             if retransmitted > 5:
                                 break
                     if b'Upload of ' + fname.encode() + b' deleted!' in data:
-                        print(data.decode())
+                        sequence_num = -1
                         break
                     sq = int(data.decode())
                     if sq == sequence_num:
@@ -64,7 +64,7 @@ def put_file(addr):
         if sequence_num != -1:
             sock.sendto(b'eof', server)
             data, server = sock.recvfrom(1024)
-            print(data.decode())
+        print(data.decode())
         sock.settimeout(15)
 
 

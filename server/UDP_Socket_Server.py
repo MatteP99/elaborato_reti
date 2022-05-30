@@ -98,6 +98,7 @@ def put_file(skt, address, lock):
                 data = b'error'
                 break
     if data == b'error':
+        skt.recvfrom(1024)
         os.remove(filename)
         strr = b'\nUpload of ' + filename.encode() + b' deleted!\n' + options
         with lock:
