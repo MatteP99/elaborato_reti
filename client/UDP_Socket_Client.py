@@ -72,6 +72,7 @@ def get_file(res, addr):
     fname = response.split(" ")[0]
     flen = int(response.split(" ")[2])
     recv = 0
+    old_sequence_num = 0
     sequence_num = 0
     sock.sendto(b"start_download", addr)
     with open(fname, 'wb') as file:
@@ -79,14 +80,18 @@ def get_file(res, addr):
             while True:
                 data, server = sock.recvfrom(1024)
                 if b"::" in data:
+                    if sequence_num > 0:
+                        old_sequence_num = sequence_num
                     sequence_num = int(data.split(b"::")[0])
                     data = b"::".join(data.split(b"::")[1:])
                 if data == b'eof' or data == b'error':
                     break
+                sock.sendto(str(sequence_num).encode(), server)
+                if old_sequence_num == sequence_num and sequence_num > 0:
+                    continue
+                file.write(data)
                 recv = recv+len(data)
                 bar(recv/flen)
-                file.write(data)
-                sock.sendto(str(sequence_num).encode(), server)
     if data == b'error':
         os.remove(fname)
         sock.sendto(b'download_error', server)

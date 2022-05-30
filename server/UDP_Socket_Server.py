@@ -91,12 +91,14 @@ def put_file(skt, address, lock):
                 data = b"::".join(data.split(b"::")[1:])
             if data == b'eof' or data == b'error':
                 break
-            file.write(data)
             with lock:
                 skt.sendto(str(seqn).encode(), address)
+            if old_seq == seqn and seqn > 0:
+                continue
             if seqn != old_seq + 1 and seqn > 0:
                 data = b'error'
                 break
+            file.write(data)
     if data == b'error':
         skt.recvfrom(1024)
         os.remove(filename)
