@@ -53,9 +53,6 @@ def put_file(addr):
                     sq = int(data.decode())
                     if sq == sequence_num:
                         sequence_num += 1
-                    elif sq > sequence_num:
-                        print("sono qui!")
-                        sequence_num = sq + 1
                     else:
                         print(f"Expected:{sequence_num}\nReceived:{data.decode()}")
                         sequence_num = -1
@@ -75,7 +72,7 @@ def get_file(res, addr):
     sequence_num = 0
     sock.sendto(b"start_download", addr)
     with open(fname, 'wb') as file:
-        with ab.alive_bar(round(flen/256), theme="classic", title="Download:", force_tty=True, dual_line=True) as bar:
+        with ab.alive_bar(manual=True, theme="classic", title="Download:", force_tty=True, dual_line=True) as bar:
             while True:
                 data, server = sock.recvfrom(1024)
                 if b"::" in data:
@@ -84,7 +81,7 @@ def get_file(res, addr):
                 if data == b'eof' or data == b'error':
                     break
                 recv = recv+len(data)
-                bar()
+                bar(recv/flen)
                 file.write(data)
                 sock.sendto(str(sequence_num).encode(), server)
                 if int(sq) == sequence_num:
@@ -107,7 +104,11 @@ if __name__ == "__main__":
         dt, server_address = sock.recvfrom(1024)
         print(dt.decode())
         while True:
+            t1 = time.time()
             msg = input("Client> ")
+            t2 = time.time() - t1
+            if t2 > 50:
+                raise sk.timeout
             if msg == 'llist':
                 strr = "\n\tLocal files:\n"
                 for val in [f for f in os.listdir(os.getcwd()) if os.path.isfile(f)]:
@@ -126,7 +127,9 @@ if __name__ == "__main__":
             if "What is the file name?" in response:
                 put_file(server_address)
     except sk.timeout:
-        print("Timed out!")
+        print("\nTimed out!")
+    except KeyboardInterrupt:
+        print("\nClosing the program...")
     except Exception as info:
         print(f"\nError: {info}\n")
         traceback.print_exc()

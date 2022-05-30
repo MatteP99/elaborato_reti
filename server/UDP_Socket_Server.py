@@ -77,25 +77,22 @@ def put_file(skt, address, lock):
         skt.sendto(b'What is the file name?', address)
     data, address = skt.recvfrom(1024)
     filename = data.decode()
-    seqn = 0
+    old_seq = 0
     skt.sendto(b'start_upload', address)
     with open(filename, 'wb') as file:
         while True:
-            sq = -1
             data, address = skt.recvfrom(1024)
             if b"::" in data:
-                sq = data.split(b"::")[0]
+                if old_seq > 0:
+                    old_seq = seqn
+                seqn = int(data.split(b"::")[0])
                 data = b"::".join(data.split(b"::")[1:])
             if data == b'eof' or data == b'error':
                 break
             file.write(data)
             with lock:
                 skt.sendto(str(seqn).encode(), address)
-            if int(sq) == seqn:
-                seqn += 1
-            elif int(sq) < seqn:
-                pass
-            else:
+            if seqn != old_seq + 1 and seqn > 0:
                 data = b'error'
                 skt.recvfrom(1024)
                 break
