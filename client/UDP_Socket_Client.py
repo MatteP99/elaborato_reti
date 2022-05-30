@@ -50,6 +50,8 @@ def put_file(addr):
                             print("!RESENDING DATA!")
                             if retransmitted > 5:
                                 break
+                    if data == b'\nUpload of ' + fname.encode() + b' deleted!\n':
+                        break
                     sq = int(data.decode())
                     if sq == sequence_num:
                         sequence_num += 1
@@ -60,8 +62,8 @@ def put_file(addr):
                         break
         if sequence_num != -1:
             sock.sendto(b'eof', server)
-        data, server = sock.recvfrom(1024)
-        print(data.decode())
+            data, server = sock.recvfrom(1024)
+            print(data.decode())
         sock.settimeout(15)
 
 
@@ -76,7 +78,7 @@ def get_file(res, addr):
             while True:
                 data, server = sock.recvfrom(1024)
                 if b"::" in data:
-                    sq = data.split(b"::")[0]
+                    sequence_num = int(data.split(b"::")[0])
                     data = b"::".join(data.split(b"::")[1:])
                 if data == b'eof' or data == b'error':
                     break
@@ -84,8 +86,6 @@ def get_file(res, addr):
                 bar(recv/flen)
                 file.write(data)
                 sock.sendto(str(sequence_num).encode(), server)
-                if int(sq) == sequence_num:
-                    sequence_num += 1
     if data == b'error':
         os.remove(fname)
         sock.sendto(b'download_error', server)

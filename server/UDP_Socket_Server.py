@@ -95,7 +95,6 @@ def put_file(skt, address, lock):
                 skt.sendto(str(seqn).encode(), address)
             if seqn != old_seq + 1 and seqn > 0:
                 data = b'error'
-                skt.recvfrom(1024)
                 break
     if data == b'error':
         os.remove(filename)
