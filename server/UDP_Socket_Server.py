@@ -2,6 +2,7 @@ import socket as sk
 import os
 import threading as td
 import time
+import traceback
 
 
 def get_file(skt, address, lock):
@@ -139,8 +140,9 @@ def handle_host(address, data, clnum, lock):
             with lock:
                 print(f'received {len(data)} bytes from {address}\nSocket: {skt.getsockname()}')
             print(data.decode())
-    except Exception as er:
-        print(er)
+    except Exception as info:
+        print(f"\nError: {info}\n")
+        traceback.print_exc()
     finally:
         with lock:
             print(f"\nClosing socket: {skt.getsockname()}")

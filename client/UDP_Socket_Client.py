@@ -50,7 +50,8 @@ def put_file(addr):
                             print("!RESENDING DATA!")
                             if retransmitted > 5:
                                 break
-                    if data == b'\nUpload of ' + fname.encode() + b' deleted!\n':
+                    if b'Upload of ' + fname.encode() + b' deleted!' in data:
+                        print(data.decode())
                         break
                     sq = int(data.decode())
                     if sq == sequence_num:
