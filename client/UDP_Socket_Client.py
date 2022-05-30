@@ -29,8 +29,8 @@ def put_file(addr):
                         chunk_size = 256
                         sequence_num_err = -1
                     # Se non ho errori ogni 5 chunk incremento il numero di chunk da inviare
-                    if sequence_num_err == -1 and chunk_size < 1000 and (sequence_num % 5) == 0:
-                        chunk_size += 5
+                    if sequence_num_err == -1 and chunk_size < 1000:
+                        chunk_size += 1
                     retransmitted = 0
                     sent += len(byte)
                     bar(sent/flen)
