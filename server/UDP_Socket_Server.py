@@ -26,7 +26,7 @@ def get_file(skt, address, lock):
                         chunk_size = 256
                         sequence_num_err = -1
                     # Se non ho errori ogni 5 chunk incremento il numero di chunk da inviare
-                    if sequence_num_err == -1 and chunk_size < 1000 and (sequence_num % 5) == 0:
+                    if sequence_num_err == -1 and chunk_size < 4050 and (sequence_num % 5) == 0:
                         chunk_size += 5
                     tries = 0
                     with lock:
@@ -45,7 +45,7 @@ def get_file(skt, address, lock):
                             with lock:
                                 skt.sendto(f"{sequence_num}::".encode() + byte, address)
                             tries += 1
-                            if tries > 5:
+                            if tries > 20:
                                 break
                     if int(data.decode()) == sequence_num:
                         sequence_num += 1
@@ -83,7 +83,7 @@ def put_file(skt, address, lock):
     skt.sendto(b'start_upload', address)
     with open(filename, 'wb') as file:
         while True:
-            data, address = skt.recvfrom(1024)
+            data, address = skt.recvfrom(4096)
             if b"::" in data:
                 if seqn > 0:
                     old_seq = seqn

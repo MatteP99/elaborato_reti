@@ -29,7 +29,7 @@ def put_file(addr):
                         chunk_size = 256
                         sequence_num_err = -1
                     # Se non ho errori ogni 5 chunk incremento il numero di chunk da inviare
-                    if sequence_num_err == -1 and chunk_size < 1000:
+                    if sequence_num_err == -1 and chunk_size < 4050:
                         chunk_size += 1
                     retransmitted = 0
                     sent += len(byte)
@@ -48,9 +48,8 @@ def put_file(addr):
                             time.sleep(0.5)
                             sock.sendto(f"{sequence_num}::".encode() + byte, server)
                             print("!RESENDING DATA!")
-                            if retransmitted > 5:
-                                print(f"{retransmitted} ritrasmissioni raggiunte")
-                                #break
+                            if retransmitted > 20:
+                                break
                     if b'Upload of ' + fname.encode() + b' deleted!' in data:
                         sequence_num = -1
                         break
@@ -71,7 +70,7 @@ def put_file(addr):
                                 break
                         else:
                             sequence_num = -1
-                            sock.sendto(b'error',server)
+                            sock.sendto(b'error', server)
                             break
                     else:
                         print(f"Expected:{sequence_num}\nReceived:{data.decode()}")
@@ -96,7 +95,7 @@ def get_file(res, addr):
     with open(fname, 'wb') as file:
         with ab.alive_bar(manual=True, theme="classic", title="Download:", force_tty=True, dual_line=True) as bar:
             while True:
-                data, server = sock.recvfrom(1024)
+                data, server = sock.recvfrom(4096)
                 if b"::" in data:
                     if sequence_num > 0:
                         old_sequence_num = sequence_num
