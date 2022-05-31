@@ -49,18 +49,36 @@ def put_file(addr):
                             sock.sendto(f"{sequence_num}::".encode() + byte, server)
                             print("!RESENDING DATA!")
                             if retransmitted > 5:
-                                break
+                                print(f"{retransmitted} ritrasmissioni raggiunte")
+                                #break
                     if b'Upload of ' + fname.encode() + b' deleted!' in data:
                         sequence_num = -1
                         break
                     sq = int(data.decode())
                     if sq == sequence_num:
                         sequence_num += 1
+                    elif sq == sequence_num - 2:
+                        sock.sendto(f"{sq}::".encode() + old_data, server)
+                        data, server = sock.recvfrom(1024)
+                        if int(data.decode()) == sequence_num - 1:
+                            sock.sendto(f"{sq}::".encode() + data, server)
+                            data, server = sock.recvfrom(1024)
+                            if int(data.decode()) == sequence_num:
+                                sequence_num += 1
+                            else:
+                                sequence_num = -1
+                                sock.sendto(b'error', server)
+                                break
+                        else:
+                            sequence_num = -1
+                            sock.sendto(b'error',server)
+                            break
                     else:
                         print(f"Expected:{sequence_num}\nReceived:{data.decode()}")
                         sequence_num = -1
                         sock.sendto(b'error', server)
                         break
+                    old_data = byte
         if sequence_num != -1:
             sock.sendto(b'eof', server)
             data, server = sock.recvfrom(1024)
