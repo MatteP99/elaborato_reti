@@ -42,6 +42,7 @@ def put_file(addr):
                         except sk.timeout:
                             sequence_num_err = sequence_num
                             if chunk_size > 32:
+                                # Dimezzo il numero dei dati da inviare alla prossima iterazione
                                 chunk_size /= 2
                                 chunk_size = int(chunk_size)
                             retransmitted += 1
@@ -121,7 +122,18 @@ def get_file(res, addr):
 if __name__ == "__main__":
     sock = sk.socket(sk.AF_INET, sk.SOCK_DGRAM)
     sock.settimeout(15)
-    server_address = ('192.168.178.26', 10000)
+    while True:
+        try:
+            ip = input("IP server (empty => localhost): ")
+            if ip == "":
+                ip = "localhost"
+            server_address = (ip, 10000)
+            sock = sk.socket(sk.AF_INET, sk.SOCK_DGRAM)
+            sock.sendto(b'try', server_address)
+            break
+        except Exception as e:
+            print("Invalid IP address!")
+
     try:
         sock.sendto(b'start', server_address)
         dt, server_address = sock.recvfrom(1024)

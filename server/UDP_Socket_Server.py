@@ -38,6 +38,7 @@ def get_file(skt, address, lock):
                         except sk.timeout:
                             sequence_num_err = sequence_num
                             if chunk_size > 32:
+                                # Dimezzo il numero dei dati da inviare alla prossima iterazione
                                 chunk_size /= 2
                                 chunk_size = int(chunk_size)
                             print(f"\nSocket: {skt.getsockname()}\nPacket lost. resending data!")
@@ -161,17 +162,23 @@ options = b"""
     get -> Download a file
     put -> Upload a file
 """
-
-ip = '192.168.178.26'
-sock = sk.socket(sk.AF_INET, sk.SOCK_DGRAM)
-server_address = (ip, 10000)
-print('\n\rstarting up on %s port %s' % server_address)
-sock.bind(server_address)
+while True:
+    try:
+        ip = input("Current IP (empty => localhost): ")
+        sock = sk.socket(sk.AF_INET, sk.SOCK_DGRAM)
+        server_address = (ip, 10000)
+        print('\n\rstarting up on %s port %s' % server_address)
+        sock.bind(server_address)
+        break
+    except Exception as e:
+        print("Invalid IP address!")
 lck = td.Lock()
 clients = 0
 try:
     while True:
         dt, addr = sock.recvfrom(1024)
+        if dt != b'start':
+            continue
         clients += 1
         print(f'\nhost: {addr} connected\nSocket: {sock.getsockname()}')
         thread = td.Thread(target=handle_host, args=[addr, dt, clients, lck], name=f"Host: {clients}")
